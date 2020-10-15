@@ -42,6 +42,14 @@ if __name__ == '__main__':
                 owl_in_one_df = pd.read_csv(save_root_path.joinpath('process', 'owl-in-one', id + '.csv.gz'), index_col=0)
                 rating_df = rating_df.sort_index()
 
+                # number of days available
+                num_of_days = (pd.to_datetime(rating_df.index[-1]) - pd.to_datetime(rating_df.index[0])).days + 1
+                if shift == 'day':
+                    data_start_time_str = (pd.to_datetime(rating_df.index[0])).replace(hour=7, minute=0, second=0)
+                else:
+                    data_start_time_str = (pd.to_datetime(rating_df.index[0]) - timedelta(days=1)).replace(hour=19, minute=0, second=0)
+                data_start_time_str = data_start_time_str.strftime(date_time_format)[:-3]
+
                 work_timeline_df = pd.read_csv(save_root_path.joinpath('process', 'work_timeline', id + '.csv.gz'), index_col=0)
                 work_timeline_df = work_timeline_df.sort_index()
 
@@ -69,9 +77,12 @@ if __name__ == '__main__':
                             data_dict[threshold][agg][j][loc]['ratio_mean'] = []
                             data_dict[threshold][agg][j][loc]['ratio_median'] = []
 
-                for i in range(len(work_timeline_df)):
-                    start_time_str = work_timeline_df['start'][i]
-                    end_time_str = work_timeline_df['end'][i]
+                # for i in range(len(work_timeline_df)):
+                for i in range(num_of_days):
+                    # start_time_str = work_timeline_df['start'][i]
+                    # end_time_str = work_timeline_df['end'][i]
+                    start_time_str = (pd.to_datetime(data_start_time_str) + timedelta(days=i)).strftime(date_time_format)[:-3]
+                    end_time_str = (pd.to_datetime(start_time_str) + timedelta(hours=12)).strftime(date_time_format)[:-3]
 
                     for agg in agg_list:
                         agg_window = int(12 / agg)
@@ -89,8 +100,16 @@ if __name__ == '__main__':
                             seg_owl_in_one_df = owl_in_one_df[start_agg_str:end_agg_str]
                             seg_df.loc[:, 'room'] = 'other'
                             for time_str in list(seg_df.index):
+                                # lets see if last minute or next minute have the loc data, since ble is not really reliable
+                                last_minute_str = ((pd.to_datetime(time_str) - timedelta(minutes=1))).strftime(date_time_format)[:-3]
+                                next_minute_str = ((pd.to_datetime(time_str) + timedelta(minutes=1))).strftime(date_time_format)[:-3]
+
                                 if time_str in list(seg_owl_in_one_df.index):
                                     seg_df.loc[time_str, 'room'] = seg_owl_in_one_df.loc[time_str, 'room']
+                                elif last_minute_str in list(seg_owl_in_one_df.index):
+                                    seg_df.loc[time_str, 'room'] = seg_owl_in_one_df.loc[last_minute_str, 'room']
+                                elif next_minute_str in list(seg_owl_in_one_df.index):
+                                    seg_df.loc[time_str, 'room'] = seg_owl_in_one_df.loc[next_minute_str, 'room']
 
                             for loc in ['all', 'ns', 'pat', 'other']:
                                 if loc == 'all':

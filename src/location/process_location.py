@@ -43,7 +43,7 @@ if __name__ == '__main__':
         print('process %s' % (id))
 
         owl_in_one_df = pd.read_csv(save_root_path.joinpath(bucket_str, 'owlinone', 'jelly', id + '.csv.gz'), index_col=0)
-        owl_in_one_df = owl_in_one_df.loc[owl_in_one_df['rssi'] >= 140]
+        owl_in_one_df = owl_in_one_df.loc[owl_in_one_df['rssi'] >= 145]
         owl_in_one_df = owl_in_one_df.sort_index()
 
         start_date = pd.to_datetime(owl_in_one_df.index[0]).strftime(date_only_date_time_format)[:-3]
@@ -64,8 +64,8 @@ if __name__ == '__main__':
                 continue
 
             for j in range(720):
-                minute_start_str = (pd.to_datetime(start_time_str) + timedelta(minutes=j)).strftime(date_time_format)[:-3]
-                minute_end_str = (pd.to_datetime(start_time_str) + timedelta(minutes=j, seconds=59)).strftime(date_time_format)[:-3]
+                minute_start_str = (pd.to_datetime(start_time_str) + timedelta(minutes=j-1)).strftime(date_time_format)[:-3]
+                minute_end_str = (pd.to_datetime(start_time_str) + timedelta(minutes=j+1)).strftime(date_time_format)[:-3]
 
                 minute_df = work_owl_in_one_df[minute_start_str:minute_end_str]
                 if len(minute_df) == 0:

@@ -9,19 +9,24 @@ import seaborn as sns
 threshold_list = [0.4, 0.5, 0.6]
 agg_list = [4, 6]
 
+icu_list = ['4 South', '5 North', '5 South ICU', '5 West', '7 West', '7 East', '7 South', '8 West']
+
 
 def create_folder(save_path):
     if Path.exists(save_path) is False: Path.mkdir(save_path)
 
 
-def return_row_df(time, type, shift, supervision, nurse_year, data):
+def return_row_df(time, type, demographic_dict, data):
     row_df = pd.DataFrame(index=[time])
     row_df['time'] = time
     row_df['type'] = type
-    row_df['shift'] = shift
-    row_df['supervision'] = supervision
-    row_df['nurse_year'] = nurse_year
+    row_df['shift'] = demographic_dict['shift']
+    row_df['supervision'] = demographic_dict['supervision']
+    row_df['nurse_year'] = demographic_dict['nurse_year']
+    row_df['ocb'] = demographic_dict['ocb']
+    row_df['icu'] = demographic_dict['icu']
     row_df['score'] = np.nanmean(data)
+    row_df['median'] = np.nanmedian(data)
 
     return row_df
 
@@ -33,22 +38,26 @@ def plot_arousal(data_df, threshold, data_type, save_root_path, loc):
     # type_list = ['shift', 'supervision']
     # title_list = ['Day shift/Night shift', 'Manager/Non-Manager']
 
-    option_list = [['Day shift', 'Night shift'], ['<= 10 Years', '> 10 Years']]
-    type_list = ['shift', 'nurse_year']
-    title_list = ['Day shift/Night shift', 'Work Experience']
+    # option_list = [['Day shift', 'Night shift'], ['<= 10 Years', '> 10 Years']]
+    # type_list = ['shift', 'nurse_year']
+    # title_list = ['Day shift/Night shift', 'Work Experience']
     # option_list = [['Day shift', 'Night shift'], ['Higher OCB', 'Lower OCB']]
     # title_list = ['Day shift/Night shift', 'OCB (Higher/Lower)']
 
+    option_list = [['Day shift', 'Night shift'], ['ICU', 'Non-ICU']]
+    type_list = ['shift', 'icu']
+    title_list = ['Day shift/Night shift', 'ICU/Non-ICU']
+
     y_range_dict = {'arousal': [-0.25, 0.25], 'pos_threshold': [0, 0.5], 'neg_threshold': [0, 0.8],
                     'ratio_mean': [0.1, 0.4], 'inter_90': [0, 0.75], 'inter_10': [-0.75, 0],
-                    'num': [10, 70]}
+                    'num': [0, 30]}
     y_tick_dict = {'arousal': [-0.3, -0.2, -0.1, 0, 0.1, 0.2],
                    'pos_threshold': [0, 0.1, 0.2, 0.3, 0.4, 0.5],
                    'neg_threshold': [0, 0.2, 0.4, 0.6, 0.8],
                    'inter_90': [0, 0.25, 0.5, 0.75],
                    'inter_10': [-0.75, -0.5, -0.25, -0.0],
                    'ratio_mean': [0.1, 0.2, 0.3, 0.4],
-                   'num': [10, 30, 50, 70],}
+                   'num': [0, 10, 20, 30],}
     title_dict = {'arousal': 'Average Arousal',
                   'pos_threshold': 'Positive Arousal Ratio',
                   'neg_threshold': 'Negative Arousal Ratio',
@@ -74,7 +83,7 @@ def plot_arousal(data_df, threshold, data_type, save_root_path, loc):
             tmp_first_df = first_df.loc[first_df['time'] == time]
             tmp_second_df = second_df.loc[second_df['time'] == time]
 
-            stats_value, p = stats.kruskal(np.array(tmp_first_df['score']), np.array(tmp_second_df['score']))
+            stats_value, p = stats.mannwhitneyu(np.array(tmp_first_df['score']), np.array(tmp_second_df['score']))
             x_tick_list[time] = x_tick_list[time] + '\n(p<0.01)' if p < 0.01 else x_tick_list[time] + '\n(p=' + str(p)[:4] + ')'
         axes[i].set_xticks(range(len(set(data_df['time']))))
         axes[i].set_xticklabels(x_tick_list, fontdict={'fontweight': 'bold', 'fontsize': 12})
@@ -124,12 +133,15 @@ if __name__ == '__main__':
     # Bucket information
     bucket_str = 'tiles-phase1-opendataset'
     audio_bucket_str = 'tiles-phase1-opendataset-audio'
+    processed_bucket_str = 'tiles-phase1-wav123-processed'
 
     # Download the participant information data
     save_root_path = Path(__file__).parent.absolute().parents[1].joinpath('data')
 
     # Read all igtb
     igtb_df = read_AllBasic(save_root_path.joinpath(bucket_str))
+    participant_info_df = pd.read_csv(save_root_path.joinpath(processed_bucket_str, 'participant_info', 'participant_info.csv'))
+
     nurse_df = igtb_df.loc[igtb_df['currentposition'] == 'A']
     days_at_work_df = read_days_at_work(save_root_path.joinpath(bucket_str))
 
@@ -149,11 +161,26 @@ if __name__ == '__main__':
 
         # read data and rate
         for id in nurse_id_list[:]:
+
+            print('Process %s' % id)
             shift = 'Day shift' if nurse_df.loc[nurse_df['participant_id'] == id]['Shift'].values[0] == 'Day shift' else 'Night shift'
             supervision = 'Manager' if nurse_df.loc[nurse_df['participant_id'] == id]['supervise'].values[0] == 1 else 'Non-Manager'
             nurse_year = '> 10 Years' if nurse_df.loc[nurse_df['participant_id'] == id]['nurseyears'].values[0] > 10 else '<= 10 Years'
-            # nurse_year = 'Higher OCB' if nurse_df.loc[nurse_df['participant_id'] == id]['ocb'].values[0] > np.nanmedian(nurse_df['ocb']) else 'Lower OCB'
-            # nurse_year = '> 10 Years' if nurse_df.loc[nurse_df['participant_id'] == id]['lang'].values[0] == 1 else '<= 10 Years'
+            ocb = 'Higher OCB' if nurse_df.loc[nurse_df['participant_id'] == id]['ocb'].values[0] > np.nanmedian(nurse_df['ocb']) else 'Lower OCB'
+
+            primary_unit = participant_info_df.loc[participant_info_df['ParticipantID'] == id]['PrimaryUnit'].values[0]
+            icu_str = 'Non-ICU'
+            for unit in icu_list:
+                if unit in primary_unit:
+                    icu_str = 'ICU'
+
+            demographic_dict = {}
+            demographic_dict['shift'] = shift
+            demographic_dict['nurse_year'] = nurse_year
+            demographic_dict['supervision'] = supervision
+            demographic_dict['ocb'] = ocb
+            demographic_dict['icu'] = icu_str
+
             if Path.exists(save_root_path.joinpath('analysis', 'arousal', 'time_in_shift', id + '.pkl')) is False:
                 continue
 
@@ -163,16 +190,16 @@ if __name__ == '__main__':
                     tmp_dict = data_dict[threshold][agg]
                     for i in range(agg):
                         for loc in ['all', 'ns', 'pat', 'other']:
-                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'arousal', shift, supervision, nurse_year, data=tmp_dict[i][loc]['mean']))
-                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'pos', shift, supervision, nurse_year, data=tmp_dict[i][loc]['pos']))
-                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'pos_threshold', shift, supervision, nurse_year, data=tmp_dict[i][loc]['pos_threshold']))
-                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'neg', shift, supervision, nurse_year, data=tmp_dict[i][loc]['neg']))
-                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'neg_threshold', shift, supervision, nurse_year, data=tmp_dict[i][loc]['neg_threshold']))
-                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'ratio_mean', shift, supervision, nurse_year, data=tmp_dict[i][loc]['ratio_mean']))
-                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'ratio_median', shift, supervision, nurse_year, data=tmp_dict[i][loc]['ratio_median']))
-                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'inter_90', shift, supervision, nurse_year, data=tmp_dict[i][loc]['inter_90']))
-                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'inter_10', shift, supervision, nurse_year, data=tmp_dict[i][loc]['inter_10']))
-                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'num', shift, supervision, nurse_year, data=tmp_dict[i][loc]['num']))
+                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'arousal', demographic_dict, data=tmp_dict[i][loc]['mean']))
+                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'pos', demographic_dict, data=tmp_dict[i][loc]['pos']))
+                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'pos_threshold', demographic_dict, data=tmp_dict[i][loc]['pos_threshold']))
+                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'neg', demographic_dict, data=tmp_dict[i][loc]['neg']))
+                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'neg_threshold', demographic_dict, data=tmp_dict[i][loc]['neg_threshold']))
+                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'ratio_mean', demographic_dict, data=tmp_dict[i][loc]['ratio_mean']))
+                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'ratio_median', demographic_dict, data=tmp_dict[i][loc]['ratio_median']))
+                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'inter_90', demographic_dict, data=tmp_dict[i][loc]['inter_90']))
+                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'inter_10', demographic_dict, data=tmp_dict[i][loc]['inter_10']))
+                            plot_dict[threshold][agg][loc] = plot_dict[threshold][agg][loc].append(return_row_df(i, 'num', demographic_dict, data=tmp_dict[i][loc]['num']))
 
         pickle.dump(plot_dict, open(Path.cwd().joinpath('plot.pkl'), "wb"))
 

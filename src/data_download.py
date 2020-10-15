@@ -20,14 +20,14 @@ def create_folder(save_path):
     if Path.exists(save_path) is False: Path.mkdir(save_path)
 
 
-def download_data(save_path, download_bucket, prefix=''):
+def download_data(save_path, download_bucket, prefix='', file_extension='.csv.gz'):
     # Create the local saved folder
     create_folder(save_path)
 
     # Download data from bucket
     for object_summary in download_bucket.objects.filter(Prefix=prefix):
 
-        if '.csv.gz' not in object_summary.key:
+        if file_extension not in object_summary.key:
             continue
 
         if len(object_summary.key.split('/')) != 0:
@@ -56,8 +56,7 @@ def read_audio(save_path, id, threshold=0.5):
     if Path.exists(Path.joinpath(save_path, 'fg-predictions-csv', id)) is False:
         return None
 
-    foreground_list = [str(file_str).split('/')[-1] for file_str in
-                       Path.iterdir(Path.joinpath(save_path, 'fg-predictions-csv', id))]
+    foreground_list = [str(file_str).split('/')[-1] for file_str in Path.iterdir(Path.joinpath(save_path, 'fg-predictions-csv', id))]
     foreground_list.sort()
 
     data_dict = {}
@@ -97,7 +96,7 @@ if __name__ == '__main__':
 
     # note this bucket is not publicly available, its used mainly for internal purpose
     # the unit is not hashed in this bucket
-    download_data(save_root_path.joinpath(processed_bucket_str), s3.Bucket(bucket_str), prefix='participant_info')
+    download_data(save_root_path.joinpath(processed_bucket_str), s3.Bucket(processed_bucket_str), prefix='participant_info', file_extension='.csv')
 
     # Download public available data
     download_data(save_root_path.joinpath(bucket_str), s3.Bucket(bucket_str), prefix='survey')
