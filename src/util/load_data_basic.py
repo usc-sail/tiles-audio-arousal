@@ -71,7 +71,7 @@ def read_pre_study_info(data_directory):
 
 
 # Load all basic data
-def read_AllBasic(data_directory):
+def read_participant_info(data_directory):
     # Read participant information
     participant_info = getParticipantInfo(data_directory)
 
