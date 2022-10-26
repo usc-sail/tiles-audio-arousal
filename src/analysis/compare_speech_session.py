@@ -23,49 +23,35 @@ def print_latex_stats(data_df, demo, loc, data_type):
     option_dict = {'shift': ['Day shift', 'Night shift'],
                    'icu': ['ICU', 'Non-ICU']}
 
-    if data_type == 'frequency' or 'session' in data_type:
-        mulp, unit = 1, ''
-    else:
-        # so it's a ratio, times 100, to get %
-        mulp, unit = 100, '\\%'
+    if data_type == 'frequency' or 'session' in data_type: mulp, unit = 1, ''
+    else: mulp, unit = 100, '\\%'
         
-    data_df = data_df.dropna()
+    # data_df = data_df.dropna()
     compare_df = data_df.loc[data_df['type'] == data_type]
 
     first_df = compare_df.loc[compare_df[demo] == option_dict[demo][0]]
     second_df = compare_df.loc[compare_df[demo] == option_dict[demo][1]]
+
+    # pdb.set_trace()
 
     # Calculate p value, this is shift level, only consider time at 0
     tmp_first_df = first_df.loc[first_df['time'] == 0]
     tmp_second_df = second_df.loc[second_df['time'] == 0]
     stats_value, p = stats.mannwhitneyu(np.array(tmp_first_df['score']), np.array(tmp_second_df['score']))
 
-    # if demo == 'icu':
-    #    print('\multicolumn{1}{l}{\\hspace{0.3cm}\\textbf{%s}} &' % loc_dict[loc])
-    # else:
-    #    print('\multicolumn{1}{l}{\\textbf{%s}} &' % loc_dict[loc])
-
-    # print('\multicolumn{1}{l}{\\hspace{0.3cm}\\textbf{%s}} &' % loc_dict[loc])
     # pdb.set_trace()
     print('\multicolumn{1}{l}{\\hspace{0.25cm}{%s}} &' % loc_dict[loc])
     print('\multicolumn{1}{c}{$%.2f%s$ ($%.2f%s$)} &' % (np.nanmedian(tmp_first_df['score']) * mulp, unit, np.nanmean(tmp_first_df['score']) * mulp, unit))
     print('\multicolumn{1}{c}{$%.2f%s$ ($%.2f%s$)} &' % (np.nanmedian(tmp_second_df['score']) * mulp, unit, np.nanmean(tmp_second_df['score']) * mulp, unit))
 
-    if p < 0.001:
-        print('\multicolumn{1}{c}{$\mathbf{<0.001^{**}}$} \\rule{0pt}{3ex} \\\\' % (p))
-    elif p < 0.05:
-        print('\multicolumn{1}{c}{$\mathbf{%.3f^*}$} \\rule{0pt}{3ex} \\\\' % (p))
-    elif p < 0.10:
-        print('\multicolumn{1}{c}{$\mathbf{%.3f^\dagger}$} \\rule{0pt}{3ex} \\\\' % (p))
-    else:
-        print('\multicolumn{1}{c}{$%.3f$} \\rule{0pt}{3ex} \\\\' % (p))
-    print()
-
-    # print('Number of valid participant: %s: %i; %s: %i' % (option_dict[demo][0], len(tmp_first_df['score'].dropna()), option_dict[demo][1], len(tmp_second_df['score'].dropna())))
+    if p < 0.001: print('\multicolumn{1}{c}{$\mathbf{<0.001^{**}}$} \\rule{0pt}{3ex} \\\\' % (p))
+    elif p < 0.05: print('\multicolumn{1}{c}{$\mathbf{%.3f^*}$} \\rule{0pt}{3ex} \\\\' % (p))
+    else: print('\multicolumn{1}{c}{$%.3f$} \\rule{0pt}{3ex} \\\\' % (p))
 
 
 def compare_stats(data_df, demo, loc, data_type):
     option_dict = {'shift': ['Day shift', 'Night shift'],
+                   'gender': ['Male', 'Female'],
                    'nurse_year': ['<= 10 Years', '> 10 Years'],
                    'icu': ['ICU', 'Non-ICU'],
                    'ocb': ['Higher OCB', 'Lower OCB'],
@@ -78,6 +64,7 @@ def compare_stats(data_df, demo, loc, data_type):
     # data_type_list = ['frequency', 'pos_', 'neg_', 'arousal']
     data_df = data_df.dropna()
     # for i in range(len(data_type_list)):
+    pdb.set_trace()
 
     compare_df = data_df.loc[data_df['type'] == data_type]
 
@@ -126,31 +113,14 @@ if __name__ == '__main__':
     # iterate over aggregation list
     for agg in agg_list:
         for loc in ['all', 'ns', 'pat', 'other']:
+            for data_type in ['inter_session_time', 'session_time_above_1min']:
+                # demographic variable
+                demo = 'shift'
+                if 'ratio' in data_type and loc == 'all': continue
 
-            # data_type = 'session_time'
-            data_type = 'inter_session_time'
-            # data_type = 'session_time_above_1min'
-
-            # Plot Positive and Negative together
-            demo = 'shift'
-            # compare_stats(data_dict[agg][loc], , demo=demo, loc=loc)
-            if 'ratio' in data_type and loc == 'all':
-                continue
-
-            day_df = data_dict[agg][loc].loc[data_dict[agg][loc]['shift'] == 'Day shift']
-            night_df = data_dict[agg][loc].loc[data_dict[agg][loc]['shift'] == 'Night shift']
-            # pdb.set_trace()
-            print_latex_stats(data_dict[agg][loc], demo=demo, loc=loc, data_type=data_type)
-            # print_latex_stats(day_df, , demo=demo, loc=loc, data_type=data_type)
-            # print_latex_stats(night_df, , demo=demo, loc=loc, data_type=data_type)
-
-            # demo = 'icu'
-            # compare_stats(data_dict[agg][loc], , demo=demo, loc=loc, data_type=data_type)
-
-            '''
-            for demo in ['stai', 'ocb', 'irb', 'pos', 'neg', 'nurse_year', 'icu']:
-                compare_stats(data_dict[agg][loc], , demo=demo, loc=loc)
-                compare_stats(data_dict[agg][loc], , demo=demo, loc=loc)
-            '''
-
-
+                # pdb.set_trace()
+                print_latex_stats(data_dict[agg][loc], demo=demo, loc=loc, data_type=data_type)
+                pdb.set_trace()
+                # day_df = data_dict[agg][loc].loc[data_dict[agg][loc]['shift'] == 'Day shift']
+                # night_df = data_dict[agg][loc].loc[data_dict[agg][loc]['shift'] == 'Night shift']
+                

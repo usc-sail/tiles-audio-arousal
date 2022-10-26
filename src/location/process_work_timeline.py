@@ -12,9 +12,6 @@ audio_feat_list = ['frameIndex', 'F0_sma', 'F0env_sma',
                    'pcm_fftMag_fband250-650_sma', 'pcm_fftMag_fband1000-4000_sma',
                    'pcm_intensity_sma', 'pcm_loudness_sma']
 
-threshold_list = [0.4, 0.5, 0.6]
-
-
 def create_folder(save_path):
     if Path.exists(save_path) is False: Path.mkdir(save_path)
 

@@ -53,6 +53,7 @@ if __name__ == '__main__':
 
     # Argument parser
     parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--threshold", default=0.7, type=float)
     parser.add_argument("--data_dir", default="/media/data/tiles-opendataset/")
     parser.add_argument("--output_dir", default="/media/data/projects/speech-privacy/tiles/")
     args = parser.parse_args()
@@ -67,14 +68,18 @@ if __name__ == '__main__':
     
     # Read all igtb
     igtb_df = load_data_basic.read_participant_info(Path(args.data_dir).joinpath(bucket_str))
-    nurse_df = igtb_df.loc[igtb_df['currentposition'] == 'A']
+    nurse_df = igtb_df.loc[(igtb_df['currentposition'] == 'A') | (igtb_df['currentposition'] == 'B')]
 
     nurse_id_list = list(nurse_df.participant_id)
     nurse_id_list.sort()
 
-    for nurse_id in nurse_id_list[50:75]:
-        data_dict = read_audio(Path(args.data_dir).joinpath(audio_bucket_str), nurse_id, threshold=0.7)
+    for nurse_id in nurse_id_list[:]:
+        print(f'process {nurse_id}')
+        # have processed before so continue
+        if Path.exists(save_root_path.joinpath('process', 'fg-audio', str(args.threshold).replace(".", ""), nurse_id+'.pkl')) == True: continue
+        # read audio data
+        data_dict = read_audio(Path(args.data_dir).joinpath(audio_bucket_str), nurse_id, threshold=args.threshold)
         if data_dict is None: continue
-        Path.mkdir(save_root_path.joinpath('process', 'fg-audio'), parents=True, exist_ok=True)
-        pickle.dump(data_dict, open(save_root_path.joinpath('process', 'fg-audio', nurse_id+'.pkl'), "wb"))
+        Path.mkdir(save_root_path.joinpath('process', 'fg-audio', str(args.threshold).replace(".", "")), parents=True, exist_ok=True)
+        pickle.dump(data_dict, open(save_root_path.joinpath('process', 'fg-audio', str(args.threshold).replace(".", ""), nurse_id+'.pkl'), "wb"))
 

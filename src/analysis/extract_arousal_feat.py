@@ -29,15 +29,6 @@ def return_row_stats_df(time, type, demographic_dict, data, all_data=None, id=''
     for ground_truth in ["ocb", "stai", "pan_PosAffect", "pan_NegAffect", "itp", "irb"]:
         row_df[ground_truth] = demographic_dict[ground_truth]
         row_df['icu'] = demographic_dict['icu']
-    """
-    row_df['nurse_year'] = demographic_dict['nurse_year']
-    row_df['ocb'] = demographic_dict['ocb']
-    row_df['stai'] = demographic_dict['stai']
-    row_df['itp'] = demographic_dict['itp']
-    row_df['irb'] = demographic_dict['irb']
-    row_df['pos'] = demographic_dict['pos']
-    row_df['neg'] = demographic_dict['neg']
-    """
 
     if len(data) == 0:
         row_df['score'] = np.nan
@@ -68,13 +59,13 @@ def return_row_stats_df(time, type, demographic_dict, data, all_data=None, id=''
             row_df['score'] = np.nanmean(np.array(data['fusion']), 10)
         elif type == 'frequency':
             # filter case that are like errors
-            # if len(data) > 0:
-            #    data = np.array(data)[np.array(data) < 120]
+            if len(data) > 0:
+                data = np.array(data)[np.array(data) < 120]
             row_df['score'] = np.nanmean(data)
         elif type == 'inter_session_time':
             # filter case that are like errors
-            if len(data) > 0:
-                data = np.array(data)[np.array(data) < 120]
+            # pdb.set_trace()
+            # if len(data) > 0: data = np.array(data)[np.array(data) < 120]
             row_df['score'] = np.nanmean(data)
         elif type == 'session_time':
             row_df['score'] = np.nanmean(data)
@@ -82,6 +73,7 @@ def return_row_stats_df(time, type, demographic_dict, data, all_data=None, id=''
             row_df['score'] = np.nanpercentile(data, 75)
         elif type == 'session_time_above_1min':
             row_df['score'] = np.nanmean(np.array(data) > 1) * 100
+            # pdb.set_trace()
         elif type == 'ratio':
             row_df['score'] = len(data) / len(all_data)
 
@@ -92,6 +84,7 @@ if __name__ == '__main__':
 
     # Argument parser
     parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--threshold", default=0.5, type=float)
     parser.add_argument("--data_dir", default="/media/data/tiles-opendataset/")
     parser.add_argument("--output_dir", default="/media/data/projects/speech-privacy/tiles/")
     args = parser.parse_args()
@@ -102,11 +95,11 @@ if __name__ == '__main__':
 
     # Download the participant information data
     save_root_path = Path(args.output_dir)
-    Path.mkdir(save_root_path.joinpath('process', 'arousal', 'time_in_shift'), parents=True, exist_ok=True)       
+    Path.mkdir(save_root_path.joinpath('process', 'arousal', 'time_in_shift', str(args.threshold).replace(".", "")), parents=True, exist_ok=True)       
     
     # Read all igtb
     igtb_df = load_data_basic.read_participant_info(Path(args.data_dir).joinpath(bucket_str))
-    nurse_df = igtb_df.loc[igtb_df['currentposition'] == 'A']
+    nurse_df = igtb_df.loc[(igtb_df['currentposition'] == 'A') | (igtb_df['currentposition'] == 'B')]
     
     participant_info_df = pd.read_csv(Path.cwd().joinpath('participant_info.csv'))
 
@@ -115,13 +108,13 @@ if __name__ == '__main__':
 
     sel_nurse_df = pd.DataFrame()
     for nurse_id in nurse_id_list:
-        if Path.exists(save_root_path.joinpath('process', 'arousal', 'time_in_shift', nurse_id + '.pkl')) is False: continue
-        data_dict = pickle.load(open(save_root_path.joinpath('process', 'arousal', 'time_in_shift', nurse_id + '.pkl'), 'rb'))
+        if Path.exists(save_root_path.joinpath('process', 'arousal', 'time_in_shift', str(args.threshold).replace(".", ""), nurse_id + '.pkl')) is False: continue
+        data_dict = pickle.load(open(save_root_path.joinpath('process', 'arousal', 'time_in_shift', str(args.threshold).replace(".", ""), nurse_id + '.pkl'), 'rb'))
         # Ensure data quality, have at least 5 days of data
-        if 'frequency' in list(data_dict[1][0]['all']):
-            if len(data_dict[1][0]['all']['frequency']) >= 5:
+        if 'inter_session_time' in list(data_dict[1][0]['all']):
+            if len(data_dict[1][0]['all']['inter_session_time']) >= 5:
                 sel_nurse_df = pd.concat([sel_nurse_df, nurse_df.loc[nurse_df['participant_id'] == nurse_id]])
-                
+    # pdb.set_trace()
     save_dict = dict()
     for agg in agg_list:
         save_dict[agg] = dict()
@@ -130,6 +123,7 @@ if __name__ == '__main__':
     # read data and rate
     nurse_id_list = list(sel_nurse_df.participant_id)
     nurse_id_list.sort()
+    # pdb.set_trace()
     for nurse_id in nurse_id_list:
 
         print(f'Process {nurse_id}')
@@ -148,12 +142,10 @@ if __name__ == '__main__':
 
         demographic_dict['shift'] = shift
         demographic_dict['supervision'] = supervision
-        # demographic_dict['nurse_year'] = nurse_year
         demographic_dict['icu'] = icu_str
 
-        if Path.exists(save_root_path.joinpath('process', 'arousal', 'time_in_shift', nurse_id + '.pkl')) == False:
-            continue
-        data_dict = pickle.load(open(save_root_path.joinpath('process', 'arousal', 'time_in_shift', nurse_id + '.pkl'), 'rb'))
+        if Path.exists(save_root_path.joinpath('process', 'arousal', 'time_in_shift', str(args.threshold).replace(".", ""), nurse_id+'.pkl')) == False: continue
+        data_dict = pickle.load(open(save_root_path.joinpath('process', 'arousal', 'time_in_shift', str(args.threshold).replace(".", ""), nurse_id+'.pkl'), 'rb'))
     
         inter_75 = np.nanpercentile(data_dict[1][0]['all']['data']['fusion'], 75)
         inter_25 = np.nanpercentile(data_dict[1][0]['all']['data']['fusion'], 25)
@@ -167,21 +159,21 @@ if __name__ == '__main__':
                 for loc in ['all', 'ns', 'pat', 'other']:
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'session_time', demographic_dict, data=agg_dict[agg_idx][loc]['session_time'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'session_time_above_1min', demographic_dict, data=agg_dict[agg_idx][loc]['session_time'], id=nurse_id))
-                    save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'session_time_75', demographic_dict, data=agg_dict[agg_idx][loc]['session_time'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'inter_session_time', demographic_dict, data=agg_dict[agg_idx][loc]['inter_session_time'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'arousal', demographic_dict, data=agg_dict[agg_idx][loc]['data'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'pos_threshold', demographic_dict,data=agg_dict[agg_idx][loc]['data'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'neg_threshold', demographic_dict, data=agg_dict[agg_idx][loc]['data'], id=nurse_id))
-                    save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'median', demographic_dict, data=agg_dict[agg_idx][loc]['data'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'inter_90', demographic_dict, data=agg_dict[agg_idx][loc]['data'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'inter_10', demographic_dict, data=agg_dict[agg_idx][loc]['data'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'inter_75', demographic_dict, data=agg_dict[agg_idx][loc]['data'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'inter_25', demographic_dict, data=agg_dict[agg_idx][loc]['data'], id=nurse_id))
-                    save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'frequency', demographic_dict, data=agg_dict[agg_idx][loc]['frequency_list'], id=nurse_id))
-                    save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'ratio', demographic_dict, data=agg_dict[agg_idx][loc]['data'], all_data=agg_dict[agg_idx]['all']['data'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'inter_75_ratio', demographic_dict, data=agg_dict[agg_idx][loc]['data'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'inter_25_ratio', demographic_dict, data=agg_dict[agg_idx][loc]['data'], id=nurse_id))
-                    save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'neutral', demographic_dict, data=agg_dict[agg_idx][loc]['data'], id=nurse_id))
+                    # save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'median', demographic_dict, data=agg_dict[agg_idx][loc]['data'], id=nurse_id))
+                    # save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'session_time_75', demographic_dict, data=agg_dict[agg_idx][loc]['session_time'], id=nurse_id))
+                    # save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'inter_session_time', demographic_dict, data=agg_dict[agg_idx][loc]['frequency_list'], id=nurse_id))
+                    # save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'ratio', demographic_dict, data=agg_dict[agg_idx][loc]['data'], all_data=agg_dict[agg_idx]['all']['data'], id=nurse_id))
+                    # save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'neutral', demographic_dict, data=agg_dict[agg_idx][loc]['data'], id=nurse_id))
     pickle.dump(save_dict, open(Path.cwd().joinpath('data.pkl'), "wb"))
 
 

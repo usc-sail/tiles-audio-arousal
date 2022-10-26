@@ -33,7 +33,7 @@ if __name__ == '__main__':
     
     # Read all igtb
     igtb_df = load_data_basic.read_participant_info(Path(args.data_dir).joinpath(bucket_str))
-    nurse_df = igtb_df.loc[igtb_df['currentposition'] == 'A']
+    nurse_df = igtb_df.loc[(igtb_df['currentposition'] == 'A') | (igtb_df['currentposition'] == 'B')]
 
     nurse_id_list = list(nurse_df.participant_id)
     nurse_id_list.sort()
@@ -43,8 +43,7 @@ if __name__ == '__main__':
     
     for nurse_id in nurse_id_list:
         shift = 'day' if nurse_df.loc[nurse_df['participant_id'] == nurse_id]['Shift'].values[0] == 'Day shift' else 'night'
-        if Path.exists(Path(args.data_dir).joinpath(bucket_str, 'owlinone', 'jelly', nurse_id + '.csv.gz')) is False:
-            continue
+        if Path.exists(Path(args.data_dir).joinpath(bucket_str, 'owlinone', 'jelly', nurse_id + '.csv.gz')) == False: continue
 
         print(f'process {nurse_id}, shift type {shift}')
 
@@ -56,8 +55,8 @@ if __name__ == '__main__':
         # read start and end date
         start_date = pd.to_datetime(owl_in_one_df.index[0]).strftime(load_data_basic.date_only_date_time_format)[:-3]
         end_date = pd.to_datetime(owl_in_one_df.index[-1]).strftime(load_data_basic.date_only_date_time_format)[:-3]
-        days = (pd.to_datetime(end_date) - pd.to_datetime(start_date)).days
-
+        days = int((pd.to_datetime(end_date) - pd.to_datetime(start_date)).total_seconds() / (3600 * 24)) + 1
+        
         save_df = pd.DataFrame()
         for idx in tqdm(range(days)):
             if shift == 'night': time_interval = timedelta(days=idx, hours=19)
@@ -65,10 +64,9 @@ if __name__ == '__main__':
             
             start_time_str = (pd.to_datetime(start_date) + time_interval).strftime(load_data_basic.date_time_format)[:-3]
             end_time_str = (pd.to_datetime(start_time_str) + timedelta(hours=12)).strftime(load_data_basic.date_time_format)[:-3]
-
             work_owl_in_one_df = owl_in_one_df[start_time_str:end_time_str]
-            if len(work_owl_in_one_df) < 100: continue
-
+            if len(work_owl_in_one_df) < 10: continue
+            
             # iterate over all possible points
             for min_idx in range(720):
                 minute_start_str = (pd.to_datetime(start_time_str) + timedelta(minutes=min_idx-1)).strftime(load_data_basic.date_time_format)[:-3]
@@ -81,8 +79,8 @@ if __name__ == '__main__':
                 room_type = minute_df.max()['receiverDirectory'].split(':')[1]
                 if room_type != 'ns' and room_type != 'pat': room_type = 'other'
                 row_df['room'] = room_type
-                save_df = save_df.append(row_df)
-
-            Path.mkdir(save_root_path.joinpath('process', 'owl-in-one', nurse_id), parents=True, exist_ok=True)
-            save_df.to_csv(save_root_path.joinpath('process', 'owl-in-one', nurse_id+".csv"))
+                save_df = pd.concat([save_df, row_df])
+                
+        Path.mkdir(save_root_path.joinpath('process', 'owl-in-one'), parents=True, exist_ok=True)
+        save_df.to_csv(save_root_path.joinpath('process', 'owl-in-one', nurse_id+".csv"))
 
