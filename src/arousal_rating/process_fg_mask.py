@@ -21,7 +21,7 @@ audio_feat_list = ['frameIndex', 'F0_sma', 'F0env_sma',
 
 def read_audio(save_path, nurse_id, threshold=0.5):
 
-    if Path.exists(Path.joinpath(save_path, 'fg-predictions-csv', nurse_id)) is False: return None
+    if Path.exists(Path.joinpath(save_path, 'fg-predictions-csv', nurse_id)) == False: return None
     foreground_list = [str(file_str).split('/')[-1] for file_str in Path.iterdir(Path.joinpath(save_path, 'fg-predictions-csv', nurse_id))]
     foreground_list.sort()
 
@@ -39,8 +39,8 @@ def read_audio(save_path, nurse_id, threshold=0.5):
         fg_feat_df = raw_feaf_df.iloc[fg_array.reshape(len(fg_array)), :][audio_feat_list]
 
         utc_time_str = str(file_str).split('/')[-1].split('.csv.gz')[0]
-        time_str = datetime.fromtimestamp(float(float(utc_time_str) / 1000.0)).strftime(load_data_basic.date_time_format)[:-3]
-        date_str = datetime.fromtimestamp(float(float(utc_time_str) / 1000.0)).strftime(load_data_basic.date_only_date_time_format)
+        time_str = datetime.fromtimestamp(float(float(utc_time_str) / 1000.0), tz=pytz.timezone('US/Pacific')).strftime(load_data_basic.date_time_format)[:-3]
+        date_str = datetime.fromtimestamp(float(float(utc_time_str) / 1000.0), tz=pytz.timezone('US/Pacific')).strftime(load_data_basic.date_only_date_time_format)
 
         # print(f'read data for {nurse_id}, {time_str}')
         if date_str not in list(data_dict.keys()): data_dict[date_str] = dict()
@@ -53,12 +53,12 @@ if __name__ == '__main__':
 
     # Argument parser
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--threshold", default=0.7, type=float)
+    parser.add_argument("--threshold", default=0.5, type=float)
     parser.add_argument("--data_dir", default="/media/data/tiles-opendataset/")
     parser.add_argument("--output_dir", default="/media/data/projects/speech-privacy/tiles/")
     args = parser.parse_args()
 
-     # Bucket information
+    # Bucket information
     bucket_str = 'tiles-phase1-opendataset'
     audio_bucket_str = 'tiles-phase1-opendataset-audio'
 
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     nurse_id_list = list(nurse_df.participant_id)
     nurse_id_list.sort()
 
-    for nurse_id in nurse_id_list[:]:
+    for nurse_id in nurse_id_list:
         print(f'process {nurse_id}')
         # have processed before so continue
         if Path.exists(save_root_path.joinpath('process', 'fg-audio', str(args.threshold).replace(".", ""), nurse_id+'.pkl')) == True: continue

@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     # Argument parser
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--threshold", default=0.5, type=float)
+    parser.add_argument("--threshold", default=0.7, type=float)
     parser.add_argument("--data_dir", default="/media/data/tiles-opendataset/")
     parser.add_argument("--output_dir", default="/media/data/projects/speech-privacy/tiles/")
     args = parser.parse_args()
@@ -39,8 +39,8 @@ if __name__ == '__main__':
     nurse_id_list.sort()
 
     # read data and rate
-    for nurse_id in nurse_id_list[:]:
-        if Path.exists(save_root_path.joinpath('process', 'arousal', 'rating', str(args.threshold).replace(".", ""), nurse_id+'.csv')) == True: continue
+    for nurse_id in nurse_id_list:
+        # if Path.exists(save_root_path.joinpath('process', 'arousal', 'rating', str(args.threshold).replace(".", ""), nurse_id+'.csv')) == True: continue
         if Path.exists(save_root_path.joinpath('process', 'fg-audio', str(args.threshold).replace(".", ""), nurse_id + '.pkl')) == False: continue
         baseline_df = pd.read_csv(save_root_path.joinpath('process', 'arousal', 'baseline', str(args.threshold).replace(".", ""), nurse_id + '.csv'), index_col=0)
         data_dict = pickle.load(open(save_root_path.joinpath('process', 'fg-audio', str(args.threshold).replace(".", ""), nurse_id + '.pkl'), 'rb'))
@@ -57,7 +57,7 @@ if __name__ == '__main__':
                 
                 min_data_df = data_dict[date_str][time_str][arousal_feat_list]
                 min_data_df = min_data_df.loc[(40 < min_data_df['F0_sma']) & (min_data_df['F0_sma'] < 500)]
-                if len(min_data_df) < 200: continue
+                if len(min_data_df) < 100: continue
                 
                 # calculate the median of each feature as the baseline
                 median_pitch = np.log10(np.nanmedian(min_data_df['F0_sma']))
@@ -79,6 +79,7 @@ if __name__ == '__main__':
         p_pitch = save_df.corr(method='spearman').loc['mean_arousal', 'pitch']
         p_intensity= save_df.corr(method='spearman').loc['mean_arousal', 'intensity']
         p_hf_lf_ratio = save_df.corr(method='spearman').loc['mean_arousal', 'hf_lf_ratio']
+        # pdb.set_trace()
 
         # fused weighted rating
         norms_array = np.array([p_pitch, p_intensity, p_hf_lf_ratio]) / np.linalg.norm(np.array([p_pitch, p_intensity, p_hf_lf_ratio]))

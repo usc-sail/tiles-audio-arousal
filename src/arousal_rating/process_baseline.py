@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     # Argument parser
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--threshold", default=0.5, type=float)
+    parser.add_argument("--threshold", default=0.7, type=float)
     parser.add_argument("--data_dir", default="/media/data/tiles-opendataset/")
     parser.add_argument("--output_dir", default="/media/data/projects/speech-privacy/tiles/")
     args = parser.parse_args()
@@ -37,12 +37,15 @@ if __name__ == '__main__':
 
     nurse_id_list = list(nurse_df.participant_id)
     nurse_id_list.sort()
-    pdb.set_trace()
+    # pdb.set_trace()
 
     for nurse_id in nurse_id_list:
         save_df = pd.DataFrame()
         if Path.exists(save_root_path.joinpath('process', 'fg-audio', str(args.threshold).replace(".", ""), nurse_id+'.pkl')) == False:
             continue
+        if Path.exists(save_root_path.joinpath('process', 'arousal', 'baseline', str(args.threshold).replace(".", ""), nurse_id+'.csv')) == True:
+            continue
+        print(f'Process data for {nurse_id}')
 
         # read fg features
         data_dict = pickle.load(open(save_root_path.joinpath('process', 'fg-audio', str(args.threshold).replace(".", ""), nurse_id + '.pkl'), 'rb'))
@@ -51,7 +54,7 @@ if __name__ == '__main__':
         for date_str in tqdm(list(data_dict.keys())):
             day_data_df = pd.DataFrame()
             for time_str in list(data_dict[date_str].keys()):
-                if len(data_dict[date_str][time_str]) < 100: continue
+                if len(data_dict[date_str][time_str]) < 200: continue
                 day_data_df = pd.concat([day_data_df, data_dict[date_str][time_str][arousal_feat_list]])
             save_df = pd.concat([save_df, day_data_df])
         
