@@ -3,10 +3,22 @@ TILES arousal rating using audio data
 
 ## Table of Contents
 * Installation
+* Study Overview
 * Preprocessing
 * Analysis
 * Machine Learning Experiment
 * Contact
+
+## Study Overview
+
+"TILES: Tracking Individual Performance with Sensors" study is to examine the physiological, environmental, and behavioral variables affecting job performance and employee wellness. In this work, we use a audio badge sensor called TAR that captures audio features from the participants. We also have installed BLE-proximity system to track the indoor locations of the participant. 
+
+Here is an example layout:
+
+<div align="center">
+ <img src="img/layout.png" width="600px">
+</div>
+
 
 ## Preprocessing
 
@@ -70,6 +82,25 @@ python3 extract_arousal_feat.py --fg_threshold 0.5
 * compare_speaking_pattern.py: compare speaking patterns to shift, ICU/non-ICU
 * plot_speaking_pattern.py: plot speaking patterns in a shift
 
+
+Example plots about inter session time:
+
+<div align="center">
+ <img src="img/inter_session_time.png" width="600px">
+</div>
+
+
+Example plots about speech activity occurrence at the nursing station:
+
+<div align="center">
+ <img src="img/occurrence_ns.png" width="600px">
+</div>
+
+Example plots about positive arousal speech ratio:
+
+<div align="center">
+ <img src="img/positive_arousal_speech.png" width="600px">
+</div>
 
 
 ### ML experiments
