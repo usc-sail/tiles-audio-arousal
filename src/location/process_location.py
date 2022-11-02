@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     # Argument parser
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--threshold", default=145, type=int)
+    parser.add_argument("--threshold", default=150, type=int)
     parser.add_argument("--data_dir", default="/media/data/tiles-opendataset/")
     parser.add_argument("--output_dir", default="/media/data/projects/speech-privacy/tiles/")
     args = parser.parse_args()

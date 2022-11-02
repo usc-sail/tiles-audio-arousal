@@ -14,7 +14,7 @@ sys.path.append(os.path.join(str(Path(os.path.realpath(__file__)).parents[1]), '
 import load_data_basic
 
 feat_list = ['inter_90', 'inter_75', 'inter_25', 'inter_10',
-             'median', 'mean', 'max', 'min', 'pos', 'neg',
+             'median', 'mean', 'max', 'min', 'pos', 'neg', 
              'pos_threshold', 'neg_threshold', 'ratio_mean', 'ratio_median',
              'frequency', 'frequency_list', 'session_time', 'inter_session_time']
 
@@ -22,7 +22,7 @@ func_dict = {'median': np.nanmedian, 'mean': np.nanmean, 'max': np.nanmax, 'min'
              'inter_90': np.nanpercentile, 'inter_75': np.nanpercentile,
              'inter_25': np.nanpercentile, 'inter_10': np.nanpercentile}
 
-agg_list = [1, 6]
+agg_list = [1, 3, 12]
 
 
 def init_data_dict():
@@ -37,6 +37,7 @@ def init_data_dict():
                 data_dict[agg][agg_idx][loc]['num'] = list()
                 data_dict[agg][agg_idx][loc]['occurance_rate'] = list()
                 data_dict[agg][agg_idx][loc]['speech_prob'] = list()
+                data_dict[agg][agg_idx][loc]['session_time_above_1min'] = list()
                 for feat in feat_list: data_dict[agg][agg_idx][loc][feat] = list()
     return data_dict
 
@@ -62,7 +63,7 @@ if __name__ == '__main__':
     # Argument parser
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--rssi_threshold", default=150, type=int)
-    parser.add_argument("--fg_threshold", default=0.7, type=float)
+    parser.add_argument("--fg_threshold", default=0.5, type=float)
     parser.add_argument("--data_dir", default="/media/data/tiles-opendataset/")
     parser.add_argument("--output_dir", default="/media/data/projects/speech-privacy/tiles/")
     args = parser.parse_args()
@@ -94,9 +95,7 @@ if __name__ == '__main__':
         
         rating_df = pd.read_csv(save_root_path.joinpath('process', 'arousal', 'rating', str(args.fg_threshold).replace(".", ""), nurse_id + '.csv'), index_col=0)
         owl_in_one_df = pd.read_csv(save_root_path.joinpath('process', 'owl-in-one', str(args.rssi_threshold), nurse_id + '.csv'), index_col=0)
-        
-        rating_df = rating_df.sort_index()
-        owl_in_one_df = owl_in_one_df.sort_index()
+        rating_df, owl_in_one_df = rating_df.sort_index(), owl_in_one_df.sort_index()
         
         # number of days available
         num_of_days = (pd.to_datetime(rating_df.index[-1]) - pd.to_datetime(rating_df.index[0])).days + 1
@@ -136,12 +135,27 @@ if __name__ == '__main__':
             for agg in agg_list:
                 agg_window = int(12 / agg)
                 for agg_idx in range(agg):
-                    start_agg_str = (pd.to_datetime(start_time_str) + timedelta(hours=agg_idx*agg_window)).strftime(load_data_basic.date_time_format)[:-3]
-                    end_agg_str = (pd.to_datetime(start_time_str) + timedelta(hours=agg_idx*agg_window+agg_window, minutes=-1)).strftime(load_data_basic.date_time_format)[:-3]
+                    if agg != 3:
+                        start_agg_str = (pd.to_datetime(start_time_str) + timedelta(hours=agg_idx*agg_window)).strftime(load_data_basic.date_time_format)[:-3]
+                        end_agg_str = (pd.to_datetime(start_time_str) + timedelta(hours=agg_idx*agg_window+agg_window, minutes=-1)).strftime(load_data_basic.date_time_format)[:-3]
+                        
+                    else:
+                        if agg_idx == 0:
+                            start_agg_str = (pd.to_datetime(start_time_str) + timedelta(hours=0)).strftime(load_data_basic.date_time_format)[:-3]
+                            end_agg_str = (pd.to_datetime(start_time_str) + timedelta(hours=3, minutes=-1)).strftime(load_data_basic.date_time_format)[:-3]
+                        elif agg_idx == 0:
+                            start_agg_str = (pd.to_datetime(start_time_str) + timedelta(hours=3)).strftime(load_data_basic.date_time_format)[:-3]
+                            end_agg_str = (pd.to_datetime(start_time_str) + timedelta(hours=9, minutes=-1)).strftime(load_data_basic.date_time_format)[:-3]
+                        else:
+                            start_agg_str = (pd.to_datetime(start_time_str) + timedelta(hours=9)).strftime(load_data_basic.date_time_format)[:-3]
+                            end_agg_str = (pd.to_datetime(start_time_str) + timedelta(hours=12)).strftime(load_data_basic.date_time_format)[:-3]
+                    
                     seg_rating_df = day_rating_df.loc[start_agg_str:end_agg_str]
                     seg_owl_in_one_df = day_owl_in_one_df[start_agg_str:end_agg_str]
+                        
                     # too few samples
-                    if len(seg_rating_df) < 5: continue
+                    if len(seg_rating_df) == 0 and agg == 12: continue
+                    if len(seg_rating_df) < 5 and agg != 12: continue
                     
                     # iterate over different locations
                     for loc in ['all', 'ns', 'pat', 'other', 'outside']:
@@ -171,14 +185,10 @@ if __name__ == '__main__':
                         # pdb.set_trace()
                         data_dict[agg][agg_idx][loc]['data'] = data_dict[agg][agg_idx][loc]['data'].append(analysis_df)
                         data_dict[agg][agg_idx][loc]['inter_session_time'].append(np.nanmean(inter_session_list))
-                        data_dict[agg][agg_idx][loc]['pos_threshold'].append(np.nanmean((analysis_df['fusion']) >= 0.3))
-                        data_dict[agg][agg_idx][loc]['neg_threshold'].append(np.nanmean((analysis_df['fusion']) <= -0.3))
+                        data_dict[agg][agg_idx][loc]['pos_threshold'].append(np.nanmean((analysis_df['fusion']) >= 0.25))
+                        data_dict[agg][agg_idx][loc]['neg_threshold'].append(np.nanmean((analysis_df['fusion']) <= -0.25))
+                        data_dict[agg][agg_idx][loc]['session_time_above_1min'].append(np.nanmean(np.array(data_dict[agg][agg_idx][loc]['session_time']) > 1) * 100)
                         data_dict[agg][agg_idx][loc]['num'].append(len(analysis_df))
                         
-                    # if agg == 1: pdb.set_trace()
-        # pdb.set_trace()
-        for agg_idx in range(6):
-            len_data = len(data_dict[6][agg_idx][loc]['pos_threshold'])
-            print(f'agg idx: {agg_idx}, {len_data}')
         pickle.dump(data_dict, open(save_root_path.joinpath('process', 'arousal', 'time_in_shift', save_setting_str, nurse_id + '.pkl'), "wb"))
 

@@ -81,12 +81,15 @@ def read_participant_info(data_directory):
     # Read Pre-Study info
     PreStudyInfo = read_pre_study_info(data_directory)
 
+    PreStudydf = pd.read_csv(Path.joinpath(data_directory, 'surveys', 'scored', 'baseline', 'part_two-rand_swls_pss_mpfi_waaq_uwes_pcq_chss.csv.gz'), index_col=3)
+    
     # Read IGTB info
     IGTB = read_IGTB(data_directory)
     UserInfo = pd.merge(IGTB, Demographic, left_on='participant_id', right_on='participant_id', how='outer')
     UserInfo = pd.merge(UserInfo, PreStudyInfo, left_on='participant_id', right_on='participant_id', how='outer')
     UserInfo = pd.merge(UserInfo, participant_info, left_on='participant_id', right_on='ParticipantID', how='outer')
-
+    UserInfo = pd.merge(UserInfo, PreStudydf, left_on='participant_id', right_on='participant_id', how='outer')
+    
     return UserInfo
 
 
