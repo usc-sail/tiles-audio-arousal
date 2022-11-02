@@ -16,7 +16,7 @@ TILES arousal rating using audio data
 Here is an example layout:
 
 <div align="center">
- <img src="img/layout.png" width="600px">
+ <img src="img/layout.png" width="800px">
 </div>
 
 
@@ -86,20 +86,20 @@ python3 extract_arousal_feat.py --fg_threshold 0.5
 Example plots about inter session time:
 
 <div align="center">
- <img src="img/inter_session_time.png" width="600px">
+ <img src="img/inter_session_time.png" width="800px">
 </div>
 
 
 Example plots about speech activity occurrence at the nursing station:
 
 <div align="center">
- <img src="img/occurrence_ns.png" width="600px">
+ <img src="img/occurrence_ns.png" width="800px">
 </div>
 
 Example plots about positive arousal speech ratio:
 
 <div align="center">
- <img src="img/positive_arousal_speech.png" width="600px">
+ <img src="img/positive_arousal_speech.png" width="800px">
 </div>
 
 
