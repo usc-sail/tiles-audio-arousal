@@ -92,7 +92,6 @@ def plot_arousal(data_df, threshold, data_type, save_root_path, loc, demo_type='
     else: sns.lineplot(x="time", y='score', dashes=False, marker="o", hue=demo_type, data=data_df, palette="viridis", ax=axes)
     
     # set ticks
-    # x_tick_list = ['1-2', '3-4', '5-6', '7-8', '9-10', '11-12']
     x_tick_list = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
 
     # Calculate p value
@@ -102,7 +101,6 @@ def plot_arousal(data_df, threshold, data_type, save_root_path, loc, demo_type='
         tmp_second_df = second_df.loc[second_df['time'] == time]
 
         stats_value, p = stats.mannwhitneyu(np.array(tmp_first_df['score']), np.array(tmp_second_df['score']))
-        # x_tick_list[time] = x_tick_list[time] + '\n(p<0.01)' if p < 0.01 else x_tick_list[time] + '\n(p=' + str(p)[:4] + ')'
         x_tick_list[time] = x_tick_list[time] + '*' if p < 0.05 else x_tick_list[time]
     axes.set_xticks(range(len(set(data_df['time']))))
     axes.set_xticklabels(x_tick_list, fontdict={'fontweight': 'bold', 'fontsize': font_size})
@@ -182,23 +180,8 @@ if __name__ == '__main__':
             # plot_arousal(plot_dict[agg][loc], args.fg_threshold, data_type='pos_threshold', save_root_path=save_root_path, loc=loc)
             day_df = plot_dict[agg][loc].loc[plot_dict[agg][loc]['shift'] == 'Day shift']
             night_df = plot_dict[agg][loc].loc[plot_dict[agg][loc]['shift'] == 'Night shift']
-            # plot_arousal(day_df, args.fg_threshold, data_type='inter_session_time', save_root_path=save_root_path, loc=loc, demo_type='gender')
-            # plot_arousal(day_df, args.fg_threshold, data_type='session_time_above_1min', save_root_path=save_root_path, loc=loc, demo_type='gender')
-            # plot_arousal(day_df, args.fg_threshold, data_type='neg_threshold', save_root_path=save_root_path, loc=loc, demo_type='gender')
-            # plot_arousal(plot_dict[agg][loc], args.fg_threshold, data_type='inter_session_time', save_root_path=save_root_path, loc=loc, demo_type='shift')
-            # plot_arousal(plot_dict[agg][loc], args.fg_threshold, data_type='session_time_above_1min', save_root_path=save_root_path, loc=loc, demo_type='shift')
-            # plot_arousal(plot_dict[agg][loc], args.fg_threshold, data_type='pos_threshold', save_root_path=save_root_path, loc=loc, demo_type='shift')
-            # plot_arousal(plot_dict[agg][loc], args.fg_threshold, data_type='neg_threshold', save_root_path=save_root_path, loc=loc, demo_type='shift')
             plot_arousal(day_df, args.fg_threshold, data_type=col, save_root_path=save_root_path, loc=loc, demo_type='icu', save_prefix='day_')
             plot_arousal(night_df, args.fg_threshold, data_type=col, save_root_path=save_root_path, loc=loc, demo_type='icu', save_prefix='night_')
             plot_arousal(plot_dict[agg][loc], args.fg_threshold, data_type=col, save_root_path=save_root_path, loc=loc, demo_type='shift', save_prefix='')
             
-            # plot_arousal(night_df, args.fg_threshold, data_type='occurance_rate', save_root_path=save_root_path, loc=loc, demo_type='icu')
-            # plot_arousal(plot_dict[agg][loc], args.fg_threshold, data_type='inter_75_ratio', save_root_path=save_root_path, loc=loc, demo_type='shift')
-            # plot_arousal(plot_dict[agg][loc], threshold, data_type='neg_threshold', save_root_path=save_root_path, loc=loc)
-            # plot_arousal(plot_dict[agg][loc], threshold, data_type='num', save_root_path=save_root_path, loc=loc)
-            # plot_arousal(night_df, args.fg_threshold, data_type='inter_session_time', save_root_path=save_root_path, loc=loc, demo_type='gender')
-
-
-
 

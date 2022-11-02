@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     # Argument parser
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--threshold", default=0.7, type=float)
+    parser.add_argument("--fg_threshold", default=0.7, type=float)
     parser.add_argument("--data_dir", default="/media/data/tiles-opendataset/")
     parser.add_argument("--output_dir", default="/media/data/projects/speech-privacy/tiles/")
     args = parser.parse_args()
@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     # Download the participant information data
     save_root_path = Path(args.output_dir)
-    Path.mkdir(save_root_path.joinpath('process', 'arousal', 'rating', str(args.threshold).replace(".", "")), parents=True, exist_ok=True)       
+    Path.mkdir(save_root_path.joinpath('process', 'arousal', 'rating', str(args.fg_threshold).replace(".", "")), parents=True, exist_ok=True)       
     
     # Read all igtb
     igtb_df = load_data_basic.read_participant_info(Path(args.data_dir).joinpath(bucket_str))
@@ -41,9 +41,9 @@ if __name__ == '__main__':
     # read data and rate
     for nurse_id in nurse_id_list:
         # if Path.exists(save_root_path.joinpath('process', 'arousal', 'rating', str(args.threshold).replace(".", ""), nurse_id+'.csv')) == True: continue
-        if Path.exists(save_root_path.joinpath('process', 'fg-audio', str(args.threshold).replace(".", ""), nurse_id + '.pkl')) == False: continue
-        baseline_df = pd.read_csv(save_root_path.joinpath('process', 'arousal', 'baseline', str(args.threshold).replace(".", ""), nurse_id + '.csv'), index_col=0)
-        data_dict = pickle.load(open(save_root_path.joinpath('process', 'fg-audio', str(args.threshold).replace(".", ""), nurse_id + '.pkl'), 'rb'))
+        if Path.exists(save_root_path.joinpath('process', 'fg-audio', str(args.fg_threshold).replace(".", ""), nurse_id + '.pkl')) == False: continue
+        baseline_df = pd.read_csv(save_root_path.joinpath('process', 'arousal', 'baseline', str(args.fg_threshold).replace(".", ""), nurse_id + '.csv'), index_col=0)
+        data_dict = pickle.load(open(save_root_path.joinpath('process', 'fg-audio', str(args.fg_threshold).replace(".", ""), nurse_id + '.pkl'), 'rb'))
 
         # if we have less than 5 days of data, skip
         if len(data_dict.keys()) < 5: continue
@@ -84,4 +84,4 @@ if __name__ == '__main__':
         # fused weighted rating
         norms_array = np.array([p_pitch, p_intensity, p_hf_lf_ratio]) / np.linalg.norm(np.array([p_pitch, p_intensity, p_hf_lf_ratio]))
         save_df['fusion'] = norms_array[0] * np.array(save_df['pitch']) + norms_array[1] * np.array(save_df['intensity']) + norms_array[2] * np.array(save_df['hf_lf_ratio'])
-        save_df.to_csv(save_root_path.joinpath('process', 'arousal', 'rating', str(args.threshold).replace(".", ""), nurse_id+'.csv'))
+        save_df.to_csv(save_root_path.joinpath('process', 'arousal', 'rating', str(args.fg_threshold).replace(".", ""), nurse_id+'.csv'))

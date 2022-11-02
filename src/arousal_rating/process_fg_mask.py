@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     # Argument parser
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--threshold", default=0.5, type=float)
+    parser.add_argument("--fg_threshold", default=0.5, type=float)
     parser.add_argument("--data_dir", default="/media/data/tiles-opendataset/")
     parser.add_argument("--output_dir", default="/media/data/projects/speech-privacy/tiles/")
     args = parser.parse_args()
@@ -76,10 +76,10 @@ if __name__ == '__main__':
     for nurse_id in nurse_id_list:
         print(f'process {nurse_id}')
         # have processed before so continue
-        if Path.exists(save_root_path.joinpath('process', 'fg-audio', str(args.threshold).replace(".", ""), nurse_id+'.pkl')) == True: continue
+        if Path.exists(save_root_path.joinpath('process', 'fg-audio', str(args.fg_threshold).replace(".", ""), nurse_id+'.pkl')) == True: continue
         # read audio data
-        data_dict = read_audio(Path(args.data_dir).joinpath(audio_bucket_str), nurse_id, threshold=args.threshold)
+        data_dict = read_audio(Path(args.data_dir).joinpath(audio_bucket_str), nurse_id, threshold=args.fg_threshold)
         if data_dict is None: continue
-        Path.mkdir(save_root_path.joinpath('process', 'fg-audio', str(args.threshold).replace(".", "")), parents=True, exist_ok=True)
-        pickle.dump(data_dict, open(save_root_path.joinpath('process', 'fg-audio', str(args.threshold).replace(".", ""), nurse_id+'.pkl'), "wb"))
+        Path.mkdir(save_root_path.joinpath('process', 'fg-audio', str(args.fg_threshold).replace(".", "")), parents=True, exist_ok=True)
+        pickle.dump(data_dict, open(save_root_path.joinpath('process', 'fg-audio', str(args.fg_threshold).replace(".", ""), nurse_id+'.pkl'), "wb"))
 

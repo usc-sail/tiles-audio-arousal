@@ -45,13 +45,8 @@ def print_latex_stats(data_df, demo, loc, data_type):
     tmp_first_df = first_df.loc[first_df['time'] == 0]
     tmp_second_df = second_df.loc[second_df['time'] == 0]
     stats_value, p = stats.mannwhitneyu(np.array(tmp_first_df['score']), np.array(tmp_second_df['score']))
-    # stats_value, p = stats.ttest_ind(np.array(tmp_first_df['score']), np.array(tmp_second_df['score']))
-    # stats_value, p = stats.kruskal(np.array(tmp_first_df['score']), np.array(tmp_second_df['score']))
-
-    # pdb.set_trace()
+    
     print('\multicolumn{1}{l}{\\hspace{0.25cm}{%s}} &' % loc_dict[loc])
-    # print('\multicolumn{1}{c}{$%.2f%s$ ($%.2f%s$)} &' % (np.nanmean(tmp_first_df['score']) * mulp, unit, np.nanstd(tmp_first_df['score']) * mulp, unit))
-    # print('\multicolumn{1}{c}{$%.2f%s$ ($%.2f%s$)} &' % (np.nanmean(tmp_second_df['score']) * mulp, unit, np.nanstd(tmp_second_df['score']) * mulp, unit))
     print('\multicolumn{1}{c}{$%.2f%s$ ($%.2f%s$)} &' % (np.nanmedian(tmp_first_df['score']) * mulp, unit, np.nanmean(tmp_first_df['score']) * mulp, unit))
     print('\multicolumn{1}{c}{$%.2f%s$ ($%.2f%s$)} &' % (np.nanmedian(tmp_second_df['score']) * mulp, unit, np.nanmean(tmp_second_df['score']) * mulp, unit))
 
@@ -143,7 +138,6 @@ if __name__ == '__main__':
         for loc in ['all', 'ns', 'pat', 'other', 'outside']:
             # demographic variable
             demo = 'shift'
-            # if 'ratio' in data_type and loc == 'all': continue
             if data_type == 'inter_session_time' and loc != 'all': continue
             if data_type == 'occurance_rate' and loc == 'all': continue
             if data_type == 'speech_prob' and loc == 'all': continue
@@ -152,5 +146,5 @@ if __name__ == '__main__':
             day_df = data_dict[1][loc].loc[data_dict[1][loc]['shift'] == 'Day shift']
             night_df = data_dict[1][loc].loc[data_dict[1][loc]['shift'] == 'Night shift']
             print_latex_stats(data_dict[1][loc], demo=demo, loc=loc, data_type=data_type)
-            # print_multi_latex_stats(day_df, night_df, demo='icu', loc=loc, data_type=data_type)
+            print_multi_latex_stats(day_df, night_df, demo='icu', loc=loc, data_type=data_type)
             

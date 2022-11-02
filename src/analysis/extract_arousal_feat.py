@@ -123,16 +123,13 @@ if __name__ == '__main__':
             for agg_idx in range(agg):
                 for loc in ['all', 'ns', 'pat', 'other', 'outside']:
                     # pdb.set_trace()
-                    # if agg_idx == 2: pdb.set_trace()
                     if len(agg_dict[agg_idx][loc]['inter_session_time']) < 5: continue
-                    # save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'session_time', demographic_dict, data=agg_dict[agg_idx][loc]['session_time'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'session_time_above_1min', demographic_dict, data=agg_dict[agg_idx][loc]['session_time_above_1min'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'inter_session_time', demographic_dict, data=agg_dict[agg_idx][loc]['inter_session_time'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'pos_threshold', demographic_dict, data=agg_dict[agg_idx][loc]['pos_threshold'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'neg_threshold', demographic_dict, data=agg_dict[agg_idx][loc]['neg_threshold'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'occurance_rate', demographic_dict, data=agg_dict[agg_idx][loc]['occurance_rate'], id=nurse_id))
                     save_dict[agg][loc] = save_dict[agg][loc].append(return_row_stats_df(agg_idx, 'speech_prob', demographic_dict, data=agg_dict[agg_idx][loc]['speech_prob'], id=nurse_id))
-                    # pdb.set_trace()
                     
     pickle.dump(save_dict, open(Path(os.path.realpath(__file__)).parents[0].joinpath(save_setting_str+'.pkl'), "wb"))
 
