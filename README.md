@@ -102,6 +102,11 @@ Example plots about positive arousal speech ratio:
  <img src="img/positive_arousal_speech.png" width="800px">
 </div>
 
+Example plots about negative arousal speech ratio:
+
+<div align="center">
+ <img src="img/negative_arousal_speech.png" width="800px">
+</div>
 
 ### ML experiments
 ```

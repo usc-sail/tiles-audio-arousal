@@ -128,6 +128,7 @@ def plot_arousal(data_df, threshold, data_type, save_root_path, loc, demo_type='
         if loc == 'ns': axes.set_title(data_title_dict[data_type]+'\n'+'Location: Nursing Station', fontdict={'fontweight': 'bold', 'fontsize': font_size})
         elif loc == 'pat': axes.set_title(data_title_dict[data_type]+'\n'+'Location: Patient Room', fontdict={'fontweight': 'bold', 'fontsize': font_size})
         elif loc == 'ouside': axes.set_title(data_title_dict[data_type]+'\n'+'Location: Outside the Unit', fontdict={'fontweight': 'bold', 'fontsize': font_size})
+        else: axes.set_title(data_title_dict[data_type], fontdict={'fontweight': 'bold', 'fontsize': font_size})
     else:
         axes.set_title(data_title_dict[data_type]+'\n', fontdict={'fontweight': 'bold', 'fontsize': font_size})
 
