@@ -41,10 +41,8 @@ if __name__ == '__main__':
 
     for nurse_id in nurse_id_list:
         save_df = pd.DataFrame()
-        if Path.exists(save_root_path.joinpath('process', 'fg-audio', str(args.fg_threshold).replace(".", ""), nurse_id+'.pkl')) == False:
-            continue
-        if Path.exists(save_root_path.joinpath('process', 'arousal', 'baseline', str(args.fg_threshold).replace(".", ""), nurse_id+'.csv')) == True:
-            continue
+        if Path.exists(save_root_path.joinpath('process', 'fg-audio', str(args.fg_threshold).replace(".", ""), nurse_id+'.pkl')) == False: continue
+        if Path.exists(save_root_path.joinpath('process', 'arousal', 'baseline', str(args.fg_threshold).replace(".", ""), nurse_id+'.csv')) == True: continue
         print(f'Process data for {nurse_id}')
 
         # read fg features

@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     # Argument parser
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--fg_threshold", default=0.7, type=float)
+    parser.add_argument("--fg_threshold", default=0.5, type=float)
     parser.add_argument("--data_dir", default="/media/data/tiles-opendataset/")
     parser.add_argument("--output_dir", default="/media/data/projects/speech-privacy/tiles/")
     args = parser.parse_args()
@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     # read data and rate
     for nurse_id in nurse_id_list:
-        # if Path.exists(save_root_path.joinpath('process', 'arousal', 'rating', str(args.threshold).replace(".", ""), nurse_id+'.csv')) == True: continue
+        if Path.exists(save_root_path.joinpath('process', 'arousal', 'rating', str(args.fg_threshold).replace(".", ""), nurse_id+'.csv')) == True: continue
         if Path.exists(save_root_path.joinpath('process', 'fg-audio', str(args.fg_threshold).replace(".", ""), nurse_id + '.pkl')) == False: continue
         baseline_df = pd.read_csv(save_root_path.joinpath('process', 'arousal', 'baseline', str(args.fg_threshold).replace(".", ""), nurse_id + '.csv'), index_col=0)
         data_dict = pickle.load(open(save_root_path.joinpath('process', 'fg-audio', str(args.fg_threshold).replace(".", ""), nurse_id + '.pkl'), 'rb'))

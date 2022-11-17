@@ -36,8 +36,9 @@ def read_audio(save_path, nurse_id, threshold=0.5):
 
         # Foreground data
         fg_array = np.argwhere(np.array(list(foreground_df['fg_prediction'])) > threshold)
-        fg_feat_df = raw_feaf_df.iloc[fg_array.reshape(len(fg_array)), :][audio_feat_list]
-
+        fg_feat_df = raw_feaf_df.iloc[fg_array.reshape(len(fg_array))+94, :][audio_feat_list]
+        fg_feat_df = fg_feat_df.loc[(40 < fg_feat_df['F0_sma']) & (fg_feat_df['F0_sma'] < 500)]
+        
         utc_time_str = str(file_str).split('/')[-1].split('.csv.gz')[0]
         time_str = datetime.fromtimestamp(float(float(utc_time_str) / 1000.0), tz=pytz.timezone('US/Pacific')).strftime(load_data_basic.date_time_format)[:-3]
         date_str = datetime.fromtimestamp(float(float(utc_time_str) / 1000.0), tz=pytz.timezone('US/Pacific')).strftime(load_data_basic.date_only_date_time_format)
@@ -76,7 +77,7 @@ if __name__ == '__main__':
     for nurse_id in nurse_id_list:
         print(f'process {nurse_id}')
         # have processed before so continue
-        if Path.exists(save_root_path.joinpath('process', 'fg-audio', str(args.fg_threshold).replace(".", ""), nurse_id+'.pkl')) == True: continue
+        # if Path.exists(save_root_path.joinpath('process', 'fg-audio', str(args.fg_threshold).replace(".", ""), nurse_id+'.pkl')) == True: continue
         # read audio data
         data_dict = read_audio(Path(args.data_dir).joinpath(audio_bucket_str), nurse_id, threshold=args.fg_threshold)
         if data_dict is None: continue

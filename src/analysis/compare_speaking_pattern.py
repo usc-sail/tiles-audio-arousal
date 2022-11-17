@@ -145,6 +145,6 @@ if __name__ == '__main__':
             # pdb.set_trace()
             day_df = data_dict[1][loc].loc[data_dict[1][loc]['shift'] == 'Day shift']
             night_df = data_dict[1][loc].loc[data_dict[1][loc]['shift'] == 'Night shift']
-            print_latex_stats(data_dict[1][loc], demo=demo, loc=loc, data_type=data_type)
+            # print_latex_stats(data_dict[1][loc], demo=demo, loc=loc, data_type=data_type)
             print_multi_latex_stats(day_df, night_df, demo='icu', loc=loc, data_type=data_type)
             

@@ -1,26 +1,28 @@
-import pdb, sys, pytz, os, argparse
 import pickle
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.pyplot as plt
+import pdb, sys, pytz, os, argparse
+
 from tqdm import tqdm
+from scipy import stats
 from pathlib import Path
 from datetime import timedelta
-from scipy import stats
 
 sys.path.append(os.path.join(str(Path(os.path.realpath(__file__)).parents[1]), 'util'))
 import load_data_basic
 
-from sklearn.linear_model import LogisticRegressionCV
-from sklearn.model_selection import cross_val_score
 from sklearn import svm
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import Lasso
+from sklearn.model_selection import GridSearchCV
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+
 
 baseline_dict = {'stai': 'Anxiety',
                  'pan_PosAffect': 'Positive Affect', 
@@ -33,6 +35,7 @@ modality_dict = {'fitbit': 'Physiological Features',
 
 
 feature_dict = {'all_inter_session_time': 'Inter-Session Time',
+                'all_session_time_above_1min': 'Above 1min session ratio', 
                 'pat_session_time_above_1min': 'Above 1min session ratio (Pat)', 
                 'ns_session_time_above_1min': 'Above 1min session ratio (NS)', 
                 'pat_occurance_rate': 'Speech Activity occurrence ratio (Pat)', 
@@ -43,6 +46,14 @@ feature_dict = {'all_inter_session_time': 'Inter-Session Time',
                 'mid_ns_neg_threshold': 'Negative Arousal Speech ratio (NS, 4-9h)', 
                 'start_ns_neg_threshold': 'Negative Arousal Speech ratio (NS, 1-3h)', 
                 'end_ns_neg_threshold': 'Negative Arousal Speech ratio (NS, 10-12h)', 
+
+                'mid_all_neg_threshold': 'Negative Arousal Speech ratio (4-9h)', 
+                'start_all_neg_threshold': 'Negative Arousal Speech ratio (1-3h)', 
+                'end_all_neg_threshold': 'Negative Arousal Speech ratio (10-12h)', 
+                'mid_all_pos_threshold': 'Negative Arousal Speech ratio (4-9h)', 
+                'start_all_pos_threshold': 'Negative Arousal Speech ratio (1-3h)', 
+                'end_all_pos_threshold': 'Negative Arousal Speech ratio (10-12h)', 
+
                 'mid_pat_pos_threshold': 'Positive Arousal Speech ratio (Pat, 4-9h)', 
                 'start_pat_pos_threshold': 'Positive Arousal Speech ratio (Pat, 1-3h)', 
                 'end_pat_pos_threshold': 'Positive Arousal Speech ratio (Pat, 10-12h)', 
@@ -51,10 +62,14 @@ feature_dict = {'all_inter_session_time': 'Inter-Session Time',
                 'end_ns_pos_threshold': 'Positive Arousal Speech ratio (NS, 10-12h)', 
                 'ns_pos_threshold': 'Positive Arousal Speech ratio (NS)', 
                 'ns_neg_threshold': 'Negative Arousal Speech ratio (NS)', 
+                'all_pos_threshold': 'Positive Arousal Speech ratio', 
+                'all_neg_threshold': 'Negative Arousal Speech ratio', 
                 'pat_pos_threshold': 'Positive Arousal Speech ratio (Pat)', 
                 'pat_neg_threshold': 'Negative Arousal Speech ratio (Pat)', 
                 'step_ratio': 'Walk Activity ratio', 
                 'duration': 'Sleep Duration', 
+                'sleep_awake_ratio': 'Asleep ratio', 
+                'run_ratio': 'Run Activity ratio', 
                 }
 
 def plot_feature_importances(top_features, feature_importances, baseline='pan_PosAffect', pred_opt='fitbit'):
@@ -64,7 +79,7 @@ def plot_feature_importances(top_features, feature_importances, baseline='pan_Po
     # axs[0].set_yticks(range(len(day_model_name)), day_model_name[::-1])
     axs.set_yticks(range(len(top_features)))
     axs.set_yticklabels(top_features, fontsize=11)
-    axs.set_xlim([0, 0.1])
+    axs.set_xlim([0, 0.08])
     axs.set_xlabel('Feature importance', fontweight="bold", fontsize=13)
     axs.set_title('Top 10 important features\n' + 'Baseline=' + baseline_dict[baseline], fontweight="bold", fontsize=13)
     axs.xaxis.set_tick_params(labelsize=11)
@@ -102,127 +117,35 @@ if __name__ == '__main__':
     
     # ML experiments
     demo_cols = ['shift', 'icu']
-    # demo_cols = ['shift']
-    # demo_cols = []
-    speech_cols = [ # 'shift', 'icu',
-                    # 'all_inter_session_time', 'all_session_time_above_1min', 'all_pos_threshold', 'all_neg_threshold',
-                    # 'ns_occurance_rate', 'ns_session_time_above_1min', 'ns_pos_threshold', 'ns_neg_threshold',
-                    # 'all_inter_session_time', 'all_session_time_above_1min', 
-                    # 'all_neg_threshold',
-                    # 'start_all_inter_session_time', 'mid_all_inter_session_time', 'end_all_inter_session_time',
-                    'all_inter_session_time',
-                    # 'mid_all_inter_session_time',
-                    'all_session_time_above_1min',
-                    # 'ns_session_time_above_1min',
-                    # 'pat_session_time_above_1min',
-                    # 'mid_all_session_time_above_1min',
-                    
-                    'ns_occurance_rate', 
-                    'pat_occurance_rate',
-                    # 'mid_ns_occurance_rate', 
-                    # 'mid_pat_occurance_rate',
-                    
-                    # 'outside_occurance_rate',
-                    # 'start_ns_neg_threshold', 
-                    # 'start_pat_neg_threshold',
-                    # 'start_ns_pos_threshold',
-                    # 'start_pat_pos_threshold',
-                    # 'mid_all_neg_threshold',
-                    # 'start_all_pos_threshold',
-                    # 'mid_all_pos_threshold',
-                    'all_pos_threshold',
-                    # 'all_neg_threshold',
-                    # 'end_all_pos_threshold',
-                    
-                    # 'end_all_neg_threshold',
-                    # 'mid_ns_neg_threshold',
-                    # 'mid_pat_neg_threshold',
-                    # 'mid_ns_pos_threshold',
-                    'mid_pat_pos_threshold',
-                    
-                    # 'end_ns_neg_threshold', 
-                    # 'end_pat_neg_threshold',
-                    # 'end_ns_pos_threshold',
-                    # 'end_pat_pos_threshold',
-                    # 'mid_outside_neg_threshold',
-                    # 'end_ns_neg_threshold',
-                    # 'end_pat_neg_threshold'
-                    ]
-    # 'ns_neg_threshold', 'pat_neg_threshold',
-    # 'mid_all_inter_session_time', 'mid_all_session_time_above_1min',
-    # 'mid_pat_neg_threshold', 'mid_ns_neg_threshold',
-    # 'mid_pat_pos_threshold', 'mid_ns_pos_threshold']
-    # 'mid_pat_occurance_rate', 'mid_ns_occurance_rate']
-    # 'ns_session_time_above_1min', 'pat_session_time_above_1min']
-    # 'other_occurance_rate', 'other_session_time_above_1min', 'other_pos_threshold', 'other_neg_threshold']
-    # fitbit_cols = ['mean_step_ratio', 'std_step_ratio', 'mean_run_ratio', 'std_run_ratio', 'mean_sleep_awake_ratio', 'std_sleep_awake_ratio', 'mean_duration', 'std_duration']
+    
     fitbit_cols = list()
     speech_cols = list()
     for stats_col in ['mean', 'std']:
-    # for stats_col in ['mean']:
-        # for col in ['step_ratio', 'sleep_awake_ratio', 'duration']:
-        # for col in ['step_ratio', 'run_ratio', 'duration']:
         for col in ['step_ratio', 'duration']:
             fitbit_cols.append(stats_col+'_'+col)
     # for stats_col in ['mean', 'std']:
     for stats_col in ['mean', 'std']:
-        # for col in ['all_inter_session_time', 'ns_occurance_rate', 'pat_occurance_rate', 'all_pos_threshold']:
-        # for col in ['all_inter_session_time', 'ns_occurance_rate', 'pat_occurance_rate', 'pat_pos_threshold', 'ns_pos_threshold']:
-        # for col in ['all_inter_session_time', 'ns_occurance_rate', 'pat_occurance_rate', 'mid_ns_pos_threshold', 'mid_pat_pos_threshold', 'all_pos_threshold']:
-        # for col in ['all_inter_session_time', 'ns_occurance_rate', 'pat_occurance_rate', 'pat_pos_threshold', 'ns_pos_threshold', 'all_pos_threshold']:
-        # for col in ['all_inter_session_time', 'ns_occurance_rate', 'pat_occurance_rate', 'all_pos_threshold']:
-        # for col in ['all_inter_session_time', 'all_session_time_above_1min', 'ns_occurance_rate', 'pat_occurance_rate', 'pat_neg_threshold', 'ns_neg_threshold']:
-        for col in ['all_inter_session_time', 
-                    # 'all_session_time_above_1min', 
+        for col in [
+                    'all_inter_session_time', 
                     'pat_session_time_above_1min', 
                     'ns_session_time_above_1min', 
                     'pat_occurance_rate', 
                     'ns_occurance_rate', 
-                    # 'ns_neg_threshold', 
-                    # 'pat_neg_threshold'
-                    # 'other_occurance_rate',
-                    # 'start_pat_neg_threshold', 'start_ns_neg_threshold', 
-                    # 'ns_neg_threshold', 
-                    # 'mid_ns_neg_threshold',
-                    # 'pat_neg_threshold', 
-                    # 'start_all_neg_threshold', 
-                    # 'mid_all_neg_threshold', 
-                    # 'end_all_neg_threshold', 
                     
                     'mid_pat_neg_threshold', 
                     'start_pat_neg_threshold', 
                     'end_pat_neg_threshold', 
                     
-                    'mid_ns_neg_threshold', 
-                    'start_ns_neg_threshold', 
-                    'end_ns_neg_threshold', 
-                    
-                    # 'mid_other_neg_threshold', 
-                    # 'start_other_neg_threshold', 
-                    # 'end_other_neg_threshold', 
-
                     'mid_pat_pos_threshold', 
                     'start_pat_pos_threshold', 
                     'end_pat_pos_threshold', 
                     
-                    'mid_ns_pos_threshold', 
-                    'start_ns_pos_threshold', 
-                    'end_ns_pos_threshold', 
-
-                    # 'ns_pos_threshold', 
-                    # 'mid_ns_pos_threshold', 
-                    'ns_pos_threshold',
-                    'ns_neg_threshold', 
+                    'all_pos_threshold',
+                    'all_neg_threshold', 
                     'pat_pos_threshold',
                     'pat_neg_threshold'
                     ]:
-        # for col in ['all_inter_session_time', 'all_session_time_above_1min', 'ns_occurance_rate', 'pat_occurance_rate', 'ns_pos_threshold', 'pat_pos_threshold', 'ns_neg_threshold', 'pat_neg_threshold']:
-        # for col in ['all_inter_session_time', 'end_all_inter_session_time', 'ns_occurance_rate', 'pat_occurance_rate', 'end_all_pos_threshold', 'all_pos_threshold']:
             speech_cols.append(stats_col+'_'+col)
-    # speech_cols.append('mean_all_session_time_above_1min')
-    # speech_cols.append('mean_ns_session_time_above_1min')
-    # speech_cols.append('mean_pat_session_time_above_1min')
-
 
     # Create the parameter grid based on the results of random search
     param_grid = {
@@ -254,8 +177,7 @@ if __name__ == '__main__':
             # Create a based model
             rf = RandomForestClassifier(random_state=8)
             # Instantiate the grid search model
-            np.random.seed(8) 
-            # grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=5, n_jobs=-1, verbose=2, scoring='r2')
+            np.random.seed(8)
             grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=5, n_jobs=-1, verbose=2, scoring='f1_micro')
             grid_search.fit(x, y)
             row_df['f1'] = grid_search.best_score_
@@ -274,7 +196,6 @@ if __name__ == '__main__':
             for idx in range(len(feat_cols)):
                 row_df[feat_cols[idx]] = feature_importances[idx]
             ml_result_df = pd.concat([ml_result_df, row_df])
-            
             
         # pdb.set_trace()
         ml_result_df.to_csv(str(Path(os.path.realpath(__file__)).parents[0].joinpath(save_setting_str+'_'+pred_opt+'.csv')))

@@ -57,17 +57,17 @@ y_tick_dict = {'arousal': [-0.3, -0.2, -0.1, 0, 0.1, 0.2],
 
 data_title_dict = {'arousal': 'Average Arousal',
                    'occurance_rate': 'Speech Session Occurence Rate',
-                    'pos_threshold': 'Positive Arousal Speech Ratio',
-                    'neg_threshold': 'Negative Arousal Speech Ratio',
-                    'inter_90': 'Arousal (Percentile 90th)',
-                    'inter_10': 'Arousal (Percentile 10th)',
-                    'inter_75_ratio': 'Arousal (Percentile 90th)',
-                    'inter_25_ratio': 'Arousal (Percentile 10th)',
-                    'ratio_mean': 'Speaking Ratio',
-                    'num': 'Number of Recordings',
-                    'session_time': 'Session Time',
-                    'inter_session_time': 'Inter-session Time',
-                    'session_time_above_1min': '>1min Session Ratio'}
+                   'pos_threshold': 'Positive Arousal Speech Ratio',
+                   'neg_threshold': 'Negative Arousal Speech Ratio',
+                   'inter_90': 'Arousal (Percentile 90th)',
+                   'inter_10': 'Arousal (Percentile 10th)',
+                   'inter_75_ratio': 'Arousal (Percentile 90th)',
+                   'inter_25_ratio': 'Arousal (Percentile 10th)',
+                   'ratio_mean': 'Speaking Ratio',
+                   'num': 'Number of Recordings',
+                   'session_time': 'Session Time',
+                   'inter_session_time': 'Inter-session Time',
+                   'session_time_above_1min': '>1min Session Ratio'}
 
     
 def plot_arousal(data_df, threshold, data_type, save_root_path, loc, demo_type='shift', save_prefix=''):
@@ -89,7 +89,7 @@ def plot_arousal(data_df, threshold, data_type, save_root_path, loc, demo_type='
     
     # pdb.set_trace()
     if demo_type == 'shift': sns.lineplot(x="time", y='score', dashes=False, marker="o", hue=demo_type, data=data_df, palette="cool", ax=axes)
-    else: sns.lineplot(x="time", y='score', dashes=False, marker="o", hue=demo_type, data=data_df, palette="viridis", ax=axes)
+    else: sns.lineplot(x="time", y='score', dashes=False, marker="o", hue=demo_type, data=data_df, palette="seismic", ax=axes)
     
     # set ticks
     x_tick_list = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
